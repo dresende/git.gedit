@@ -1,0 +1,9 @@
+[Gedit Plugin]
+Loader=python
+Module=gitgedit
+IAge=2
+Name=Git Integration
+Description=Simple Git Integration
+Authors=Diogo Resende <dresende@thinkdigital.pt>
+Copyright=Copyright © 2010 Diogo Resende <dresende@thinkdigital.pt>
+Website=http://www.thinkdigital.pt
