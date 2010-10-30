@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-interface>
+  <!-- interface-requires gtk+ 2.12 -->
+  <!-- interface-naming-policy project-wide -->
+  <widget class="GtkWindow" id="commit_window">
+    <property name="title" translatable="yes">Commit</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="urgency_hint">True</property>
+    <child>
+      <widget class="GtkFixed" id="fixed1">
+        <property name="visible">True</property>
+        <child>
+          <widget class="GtkLabel" id="label1">
+            <property name="width_request">154</property>
+            <property name="height_request">22</property>
+            <property name="visible">True</property>
+            <property name="xalign">0</property>
+            <property name="label" translatable="yes">Commit message:</property>
+          </widget>
+          <packing>
+            <property name="x">16</property>
+            <property name="y">147</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="GtkButton" id="commit_button">
+            <property name="label" translatable="yes">_Commit</property>
+            <property name="width_request">95</property>
+            <property name="height_request">30</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="can_default">True</property>
+            <property name="has_default">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_underline">True</property>
+          </widget>
+          <packing>
+            <property name="x">239</property>
+            <property name="y">199</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="GtkEntry" id="commit_text">
+            <property name="width_request">321</property>
+            <property name="height_request">25</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="has_focus">True</property>
+            <property name="is_focus">True</property>
+            <property name="invisible_char">•</property>
+            <property name="activates_default">True</property>
+          </widget>
+          <packing>
+            <property name="x">13</property>
+            <property name="y">167</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="GtkTreeView" id="commit_changes">
+            <property name="width_request">351</property>
+            <property name="height_request">138</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </widget>
+        </child>
+        <child>
+          <widget class="GtkHSeparator" id="hseparator1">
+            <property name="width_request">351</property>
+            <property name="height_request">20</property>
+            <property name="visible">True</property>
+          </widget>
+          <packing>
+            <property name="y">130</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+</glade-interface>

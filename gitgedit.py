@@ -1,5 +1,6 @@
 import gtk
 import os
+import commands
 import subprocess
 import gedit
 
@@ -18,6 +19,7 @@ class GitGeditWindowHelper:
 		#print "Plugin created for", window
 		self._window = window
 		self._plugin = plugin
+		self._last_uri = None
 		self._insert_toolbar()
 
 	def deactivate(self):
@@ -61,7 +63,43 @@ class GitGeditWindowHelper:
 			self._git_add_file(document.get_uri())
 
 	def _toolbar_git_commit(self, action):
-		pass
+		if self._last_uri == None:
+			return
+
+		dialog = gtk.glade.XML("gitgedit.commit.glade", "commit_window")
+		
+		treeview = dialog.get_widget("commit_changes")
+		
+		column = gtk.TreeViewColumn("File", gtk.CellRendererText(), text=0)
+		column.set_resizable(True)
+		column.set_sort_column_id(0)
+		treeview.append_column(column)
+		
+		changes_list = gtk.ListStore(str)
+		treeview.set_model(changes_list)
+		
+		os.chdir(os.path.dirname(self._last_uri))
+		output = commands.getoutput("git status --porcelain")
+		
+		for line in output.splitlines():
+			if line.startswith("?? "):
+				continue
+			changes_list.append([ line[3:] ])
+		
+		dialog.get_widget("commit_button").connect("clicked", self._git_commit, dialog)
+		dialog.get_widget("commit_window").show()
+	
+	def _git_commit(self, widget, dialog):
+		text = dialog.get_widget("commit_text").get_text()
+		
+		if len(text) == 0:
+			return
+
+		os.chdir(os.path.dirname(self._last_uri))
+		
+		subprocess.Popen([ "git", "commit", "-m", text ])
+		
+		dialog.get_widget("commit_window").desotry()
 	
 	def _git_add_file(self, path):
 		if path == None:
@@ -71,6 +109,9 @@ class GitGeditWindowHelper:
 		if path[0:7] != "file://":
 			self._alert("For now, the plugin only works with local files")
 			return
+
+		self._last_uri = path[7:]
+		
 		subprocess.Popen([ '/usr/bin/git', 'add', path[7:] ])
 	
 	def _alert(self, message):
@@ -90,3 +131,4 @@ class GitGeditPlugin(gedit.Plugin):
 
 	def update_ui(self, window):
 		self._instances[window].update_ui()
+
