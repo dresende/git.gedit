@@ -9,7 +9,11 @@ import gedit
 toolbar_ui_str = """<ui>
   <toolbar name="ToolBar">
     <separator/>
-    <toolitem name="GitAdd" action="GitAdd"/>
+    <toolitem action="GitAdd">
+      <menu>
+        <menuitem name="GitAdd" action="GitAdd"/>
+      </menu>
+    </toolitem>
     <toolitem name="GitAddActive" action="GitAddActive"/>
     <toolitem name="GitCommit" action="GitCommit"/>
   </toolbar>
