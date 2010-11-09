@@ -29,6 +29,13 @@ class GitGeditWindowHelper:
 		self._plugin = None
 	
 	# GIT STUFF
+	def git_push(self, widget, dialog, path):
+		os.chdir(os.path.dirname(path))
+		
+		subprocess.Popen([ "git", "push", self.git_remote, "master" ])
+		
+		dialog.get_widget("push_window").destroy()
+	
 	def git_commit(self, widget, dialog, path):
 		text = dialog.get_widget("commit_text").get_text()
 		
@@ -100,7 +107,7 @@ class GitGeditWindowHelper:
 		
 		path = self.normalize_path(path)
 
-		dialog = gtk.glade.XML("gitgedit.commit.glade", "commit_window")
+		dialog = gtk.glade.XML("gitgedit.glade", "commit_window")
 		
 		treeview = dialog.get_widget("commit_changes")
 		
@@ -124,7 +131,56 @@ class GitGeditWindowHelper:
 		dialog.get_widget("commit_window").show()
 	
 	def ui_toolbar_git_push(self, action):
-		pass
+		document = self._window.get_active_tab().get_document()
+		
+		path = document.get_uri()
+		if path == None:
+			self._alert("No document is active")
+			return
+		
+		path = self.normalize_path(path)
+
+		dialog = gtk.glade.XML("gitgedit.glade", "push_window")
+		
+		treeview = dialog.get_widget("remote_list")
+		
+		column = gtk.TreeViewColumn("Remote", gtk.CellRendererText(), text=0)
+		column.set_resizable(True)
+		column.set_sort_column_id(0)
+		treeview.append_column(column)
+		
+		remote_list = gtk.ListStore(str)
+		treeview.set_model(remote_list)
+		
+		os.chdir(os.path.dirname(path))
+		output = commands.getoutput("git remote")
+		
+		self.remote_list = []
+		
+		for line in output.splitlines():
+			remote_list.append([ line ])
+			self.remote_list.append(line)
+		
+		dialog.get_widget("remote_list").get_selection().connect("changed", self.ui_change_push_remote, dialog)
+		dialog.get_widget("push_button").connect("clicked", self.git_push, dialog, path)
+		dialog.get_widget("push_button").set_sensitive(False)
+		dialog.get_widget("push_window").show()
+	
+	def ui_change_push_remote(self, treeselection, dialog):
+		if treeselection.count_selected_rows() != 1:
+			dialog.get_widget("push_button").set_sensitive(False)
+			return
+		
+		(store, sel) = treeselection.get_selected_rows()
+		(row, ) = sel[0]
+		
+		if row < 0 or row >= len(self.remote_list):
+			dialog.get_widget("push_button").set_sensitive(False)
+			return
+		
+		self.git_remote = self.remote_list[row]
+		
+		dialog.get_widget("push_button").set_sensitive(True)
 
 	def ui_update(self):
 		active_tab = self._window.get_active_tab()
