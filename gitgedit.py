@@ -9,13 +9,10 @@ import gedit
 toolbar_ui_str = """<ui>
   <toolbar name="ToolBar">
     <separator/>
-    <toolitem action="GitAdd">
-      <menu>
-        <menuitem name="GitAdd" action="GitAdd"/>
-      </menu>
-    </toolitem>
+    <toolitem name="GitAdd" action="GitAdd"/>
     <toolitem name="GitAddActive" action="GitAddActive"/>
     <toolitem name="GitCommit" action="GitCommit"/>
+    <toolitem name="GitPush" action="GitPush"/>
   </toolbar>
 </ui>
 """
@@ -24,7 +21,6 @@ class GitGeditWindowHelper:
 	def __init__(self, plugin, window):
 		self._window = window
 		self._plugin = plugin
-		self._last_uri = None
 		self._insert_toolbar()
 
 	def deactivate(self):
@@ -36,9 +32,10 @@ class GitGeditWindowHelper:
 		manager = self._window.get_ui_manager()
 
 		self._action_group = gtk.ActionGroup("GitGeditPluginActions")
-		self._action_group.add_actions([("GitAdd", gtk.STOCK_ADD, _("Git Add"), None, _("Add file to staged items"), self._toolbar_git_add)])
-		self._action_group.add_actions([("GitAddActive", gtk.STOCK_ADD, _("Git Add Active"), None, _("Add active files to staged items"), self._toolbar_git_add_active)])
-		self._action_group.add_actions([("GitCommit", gtk.STOCK_SAVE, _("Git Commit"), None, _("Commit staged items"), self._toolbar_git_commit)])
+		self._action_group.add_actions([("GitAdd", gtk.STOCK_DND, _("Git Add"), None, _("Add file to staged items"), self._toolbar_git_add)])
+		self._action_group.add_actions([("GitAddActive", gtk.STOCK_DND_MULTIPLE, _("Git Add Active"), None, _("Add active files to staged items"), self._toolbar_git_add_active)])
+		self._action_group.add_actions([("GitCommit", gtk.STOCK_SAVE_AS, _("Git Commit"), None, _("Commit staged items"), self._toolbar_git_commit)])
+		self._action_group.add_actions([("GitPush", gtk.STOCK_GO_UP, _("Git Push"), None, _("Push commits from master to origin"), self._toolbar_git_push)])
 
 		manager.insert_action_group(self._action_group, -1)
 		
@@ -51,7 +48,33 @@ class GitGeditWindowHelper:
 		manager.ensure_update()
 
 	def update_ui(self):
-		pass
+		active_tab = self._window.get_active_tab()
+		if active_tab == None:
+			self.ui_hide_git()
+			return
+		
+		path = active_tab.get_document().get_uri()
+		if path == None:
+			self.ui_hide_git()
+			return
+		
+		path = self._normalize_path(path)
+		
+		os.chdir(os.path.dirname(path))
+		
+		(status, output) = commands.getstatusoutput("git status")
+		
+		if status != 0:
+			self.ui_hide_git()
+			return
+		
+		self.ui_show_git()
+	
+	def ui_hide_git(self):
+		self._action_group.set_visible(False)
+	
+	def ui_show_git(self):
+		self._action_group.set_visible(True)
 	
 	def _toolbar_git_add(self, action):
 		document = self._window.get_active_tab().get_document()
@@ -65,8 +88,14 @@ class GitGeditWindowHelper:
 			self._git_add_file(document.get_uri())
 
 	def _toolbar_git_commit(self, action):
-		if self._last_uri == None:
+		document = self._window.get_active_tab().get_document()
+		
+		path = document.get_uri()
+		if path == None:
+			self._alert("No document is active")
 			return
+		
+		path = self._normalize_path(path)
 
 		dialog = gtk.glade.XML("gitgedit.commit.glade", "commit_window")
 		
@@ -80,7 +109,7 @@ class GitGeditWindowHelper:
 		changes_list = gtk.ListStore(str)
 		treeview.set_model(changes_list)
 		
-		os.chdir(os.path.dirname(self._last_uri))
+		os.chdir(os.path.dirname(path))
 		output = commands.getoutput("git status --porcelain")
 		
 		for line in output.splitlines():
@@ -88,10 +117,13 @@ class GitGeditWindowHelper:
 				continue
 			changes_list.append([ line[3:] ])
 		
-		dialog.get_widget("commit_button").connect("clicked", self._git_commit, dialog)
+		dialog.get_widget("commit_button").connect("clicked", self._git_commit, dialog, path)
 		dialog.get_widget("commit_window").show()
 	
-	def _git_commit(self, widget, dialog):
+	def _toolbar_git_push(self, action):
+		pass
+	
+	def _git_commit(self, widget, dialog, path):
 		text = dialog.get_widget("commit_text").get_text()
 		
 		if len(text) == 0:
@@ -101,7 +133,7 @@ class GitGeditWindowHelper:
 		dialog.get_widget("commit_text").set_sensitive(False)
 		dialog.get_widget("commit_button").set_sensitive(False)
 
-		os.chdir(os.path.dirname(self._last_uri))
+		os.chdir(os.path.dirname(path))
 		
 		subprocess.Popen([ "git", "commit", "-m", text ])
 		
@@ -111,14 +143,14 @@ class GitGeditWindowHelper:
 		if path == None:
 			self._alert("No document is active")
 			return
-
-		if path[0:7] != "file://":
-			self._alert("For now, the plugin only works with local files")
-			return
-
-		self._last_uri = path[7:]
 		
-		subprocess.Popen([ '/usr/bin/git', 'add', path[7:] ])
+		subprocess.Popen([ '/usr/bin/git', 'add', self._normalize_path(path) ])
+	
+	def _normalize_path(self, path):
+		if path[0:7] == "file://":
+			return path[7:]
+		
+		return path
 	
 	def _alert(self, message):
 		print message
