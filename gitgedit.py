@@ -28,7 +28,8 @@ class GitGeditWindowHelper:
 		self._window = None
 		self._plugin = None
 	
-	def _git_commit(self, widget, dialog, path):
+	# GIT STUFF
+	def git_commit(self, widget, dialog, path):
 		text = dialog.get_widget("commit_text").get_text()
 		
 		if len(text) == 0:
@@ -44,14 +45,15 @@ class GitGeditWindowHelper:
 		
 		dialog.get_widget("commit_window").destroy()
 	
-	def _git_add_file(self, path):
+	def git_add_file(self, path):
 		if path == None:
 			self._alert("No document is active")
 			return
 		
-		subprocess.Popen([ '/usr/bin/git', 'add', self._normalize_path(path) ])
+		subprocess.Popen([ '/usr/bin/git', 'add', self.normalize_path(path) ])
 	
-	def _normalize_path(self, path):
+	# HELPER METHODS
+	def normalize_path(self, path):
 		if path[0:7] == "file://":
 			return path[7:]
 		
@@ -80,13 +82,13 @@ class GitGeditWindowHelper:
 	def ui_toolbar_git_add(self, action):
 		document = self._window.get_active_tab().get_document()
 		
-		self._git_add_file(document.get_uri())
+		self.git_add_file(document.get_uri())
 
 	def ui_toolbar_git_add_active(self, action):
 		documents = self._window.get_documents()
 		
 		for document in documents:
-			self._git_add_file(document.get_uri())
+			self.git_add_file(document.get_uri())
 
 	def ui_toolbar_git_commit(self, action):
 		document = self._window.get_active_tab().get_document()
@@ -96,7 +98,7 @@ class GitGeditWindowHelper:
 			self._alert("No document is active")
 			return
 		
-		path = self._normalize_path(path)
+		path = self.normalize_path(path)
 
 		dialog = gtk.glade.XML("gitgedit.commit.glade", "commit_window")
 		
@@ -118,7 +120,7 @@ class GitGeditWindowHelper:
 				continue
 			changes_list.append([ line[3:] ])
 		
-		dialog.get_widget("commit_button").connect("clicked", self._git_commit, dialog, path)
+		dialog.get_widget("commit_button").connect("clicked", self.git_commit, dialog, path)
 		dialog.get_widget("commit_window").show()
 	
 	def ui_toolbar_git_push(self, action):
@@ -135,7 +137,7 @@ class GitGeditWindowHelper:
 			self.ui_hide_git()
 			return
 		
-		path = self._normalize_path(path)
+		path = self.normalize_path(path)
 		
 		os.chdir(os.path.dirname(path))
 		
