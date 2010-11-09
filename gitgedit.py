@@ -46,35 +46,6 @@ class GitGeditWindowHelper:
 		manager.remove_ui(self._toolbar_ui)
 		manager.remove_action_group(self._action_group)
 		manager.ensure_update()
-
-	def update_ui(self):
-		active_tab = self._window.get_active_tab()
-		if active_tab == None:
-			self.ui_hide_git()
-			return
-		
-		path = active_tab.get_document().get_uri()
-		if path == None:
-			self.ui_hide_git()
-			return
-		
-		path = self._normalize_path(path)
-		
-		os.chdir(os.path.dirname(path))
-		
-		(status, output) = commands.getstatusoutput("git status")
-		
-		if status != 0:
-			self.ui_hide_git()
-			return
-		
-		self.ui_show_git()
-	
-	def ui_hide_git(self):
-		self._action_group.set_visible(False)
-	
-	def ui_show_git(self):
-		self._action_group.set_visible(True)
 	
 	def _toolbar_git_add(self, action):
 		document = self._window.get_active_tab().get_document()
@@ -151,6 +122,35 @@ class GitGeditWindowHelper:
 			return path[7:]
 		
 		return path
+
+	def ui_update(self):
+		active_tab = self._window.get_active_tab()
+		if active_tab == None:
+			self.ui_hide_git()
+			return
+		
+		path = active_tab.get_document().get_uri()
+		if path == None:
+			self.ui_hide_git()
+			return
+		
+		path = self._normalize_path(path)
+		
+		os.chdir(os.path.dirname(path))
+		
+		(status, output) = commands.getstatusoutput("git status")
+		
+		if status != 0:
+			self.ui_hide_git()
+			return
+		
+		self.ui_show_git()
+	
+	def ui_hide_git(self):
+		self._action_group.set_visible(False)
+	
+	def ui_show_git(self):
+		self._action_group.set_visible(True)
 	
 	def _alert(self, message):
 		print message
@@ -168,5 +168,5 @@ class GitGeditPlugin(gedit.Plugin):
 		del self._instances[window]
 
 	def update_ui(self, window):
-		self._instances[window].update_ui()
+		self._instances[window].ui_update()
 
