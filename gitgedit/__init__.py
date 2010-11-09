@@ -31,8 +31,8 @@ class GitGeditWindowHelper:
 	# GIT STUFF
 	def git_push(self, widget, dialog, path):
 		os.chdir(os.path.dirname(path))
-		
-		subprocess.Popen([ "git", "push", self.git_remote, "master" ])
+
+		commands.getoutput("git push %s master" % (self.git_remote))
 		
 		dialog.get_widget("push_window").destroy()
 	
