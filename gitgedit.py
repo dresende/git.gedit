@@ -21,31 +21,12 @@ class GitGeditWindowHelper:
 	def __init__(self, plugin, window):
 		self._window = window
 		self._plugin = plugin
-		self._insert_toolbar()
+		self.ui_insert()
 
 	def deactivate(self):
-		self._remove_toolbar()
+		self.ui_remove()
 		self._window = None
 		self._plugin = None
-	
-	def _insert_toolbar(self):
-		manager = self._window.get_ui_manager()
-
-		self._action_group = gtk.ActionGroup("GitGeditPluginActions")
-		self._action_group.add_actions([("GitAdd", gtk.STOCK_DND, _("Git Add"), None, _("Add file to staged items"), self._toolbar_git_add)])
-		self._action_group.add_actions([("GitAddActive", gtk.STOCK_DND_MULTIPLE, _("Git Add Active"), None, _("Add active files to staged items"), self._toolbar_git_add_active)])
-		self._action_group.add_actions([("GitCommit", gtk.STOCK_SAVE_AS, _("Git Commit"), None, _("Commit staged items"), self._toolbar_git_commit)])
-		self._action_group.add_actions([("GitPush", gtk.STOCK_GO_UP, _("Git Push"), None, _("Push commits from master to origin"), self._toolbar_git_push)])
-
-		manager.insert_action_group(self._action_group, -1)
-		
-		self._toolbar_ui = manager.add_ui_from_string(toolbar_ui_str)
-	
-	def _remove_toolbar(self):
-		manager = self._window.get_ui_manager()
-		manager.remove_ui(self._toolbar_ui)
-		manager.remove_action_group(self._action_group)
-		manager.ensure_update()
 	
 	def _toolbar_git_add(self, action):
 		document = self._window.get_active_tab().get_document()
@@ -122,6 +103,26 @@ class GitGeditWindowHelper:
 			return path[7:]
 		
 		return path
+	
+	# UI STUFF
+	def ui_insert(self):
+		manager = self._window.get_ui_manager()
+
+		self._action_group = gtk.ActionGroup("GitGeditPluginActions")
+		self._action_group.add_actions([("GitAdd", gtk.STOCK_DND, _("Git Add"), None, _("Add file to staged items"), self._toolbar_git_add)])
+		self._action_group.add_actions([("GitAddActive", gtk.STOCK_DND_MULTIPLE, _("Git Add Active"), None, _("Add active files to staged items"), self._toolbar_git_add_active)])
+		self._action_group.add_actions([("GitCommit", gtk.STOCK_SAVE_AS, _("Git Commit"), None, _("Commit staged items"), self._toolbar_git_commit)])
+		self._action_group.add_actions([("GitPush", gtk.STOCK_GO_UP, _("Git Push"), None, _("Push commits from master to origin"), self._toolbar_git_push)])
+
+		manager.insert_action_group(self._action_group, -1)
+		
+		self._toolbar_ui = manager.add_ui_from_string(toolbar_ui_str)
+	
+	def ui_remove(self):
+		manager = self._window.get_ui_manager()
+		manager.remove_ui(self._toolbar_ui)
+		manager.remove_action_group(self._action_group)
+		manager.ensure_update()
 
 	def ui_update(self):
 		active_tab = self._window.get_active_tab()
@@ -152,6 +153,7 @@ class GitGeditWindowHelper:
 	def ui_show_git(self):
 		self._action_group.set_visible(True)
 	
+	# DEBUG STUFF
 	def _alert(self, message):
 		print message
 
